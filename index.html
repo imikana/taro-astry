@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Таро Астры</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one phone-width column — tabs, spread slots, then the deck/fan "table" at the bottom, reading below. Dark mystic, single look. */
+:root{
+  --night:#0a0e22;
+  --night-2:#131a3c;
+  --gold:#dcae55;
+  --gold-hi:#f4d993;
+  --text:#fbf4e4;
+  --muted:#d6cfee;
+  --ember:#a8302d;
+  --display:"Marcellus", "Cormorant Garamond", Georgia, serif;
+  --body:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+  color-scheme:dark;
+}
+html,body{height:100%;margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{background:var(--night);color:var(--text);font-family:var(--body);font-size:21px;font-weight:500;line-height:1.5;overflow-x:hidden}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:480px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 40px;display:flex;flex-direction:column;gap:18px}
+header{text-align:center;display:flex;flex-direction:column;gap:4px}
+h1{font-family:var(--display);font-weight:400;font-size:34px;letter-spacing:.06em;margin:0;color:var(--gold-hi);text-shadow:0 0 18px rgba(244,217,147,.35);text-wrap:balance}
+.sub{color:var(--muted);font-style:italic;margin:0;font-size:20px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.sp-desc{margin:-6px 0 0;text-align:center;color:var(--muted);font-style:italic;font-size:19px;min-height:1.5em}
+.tab{font-family:var(--display);font-size:15px;letter-spacing:.04em;color:var(--muted);background:color-mix(in srgb, var(--night) 55%, transparent);border:1px solid color-mix(in srgb, var(--gold) 35%, transparent);border-radius:999px;padding:7px 14px;cursor:pointer;transition:all .25s}
+.tab[aria-pressed="true"]{color:var(--night);background:var(--gold);border-color:var(--gold)}
+.tab:focus-visible,.btn:focus-visible,.fcard:focus-visible{outline:2px solid var(--gold-hi);outline-offset:3px}
+.tab:disabled{opacity:.5;cursor:default}
+
+.spread{display:grid;column-gap:6px;row-gap:34px;justify-items:center;align-items:end;min-height:200px}
+.spread.numbered{row-gap:12px;align-items:center}
+.slot{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;width:100%}
+.slot-label{font-family:var(--display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-hi);text-align:center;line-height:1.2;min-height:2.4em;display:flex;align-items:flex-end;justify-content:center}
+.numbered .slot-label{display:none}
+.slot-place{width:var(--sw);height:calc(var(--sw) * 1.5);border-radius:9px;border:1px dashed color-mix(in srgb, var(--gold) 40%, transparent);position:relative;max-width:100%}
+.numbered .slot-place::after{content:attr(data-n);position:absolute;left:-7px;top:-7px;z-index:3;width:22px;height:22px;border-radius:50%;background:var(--gold);color:var(--night);font-family:var(--display);font-size:13px;display:grid;place-items:center}
+.slot.crossed{z-index:2;align-self:center}
+.slot.crossed .slot-place{border-color:transparent}
+.slot.crossed .slot-place::after{left:auto;right:-14px;top:calc(50% - 11px)}
+.card.cross{transform:rotate(90deg) scale(.86);transition:transform .7s cubic-bezier(.3,.7,.2,1)}
+.numbered .rev-tag{display:none}
+.verdict{text-align:center;font-family:var(--display);font-size:40px;letter-spacing:.08em;color:var(--gold-hi);text-shadow:0 0 24px rgba(255,180,90,.55);margin:0}
+.card{position:absolute;inset:0;perspective:1200px}
+.inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .95s cubic-bezier(.3,.1,.2,1)}
+.card.flipped .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:9px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--night-2);box-shadow:0 6px 18px rgba(0,0,0,.55)}
+.face img{width:100%;height:100%;object-fit:cover;display:block}
+.front{transform:rotateY(180deg)}
+.card.reversed .front img{transform:rotate(180deg)}
+.card.glow .front{animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 1px rgba(255,214,150,.75),0 0 22px 4px rgba(255,180,90,.5),0 0 60px 10px rgba(255,170,80,.2)}50%{box-shadow:0 0 0 1.5px rgba(255,226,170,1),0 0 40px 12px rgba(255,186,100,.75),0 0 90px 24px rgba(255,160,70,.32)}}
+.rev-tag{position:absolute;left:50%;bottom:-28px;transform:translateX(-50%);font-size:16px;font-style:italic;color:var(--muted);white-space:nowrap;opacity:0;transition:opacity .5s .9s}
+.card.reversed.flipped + .rev-tag{opacity:1}
+
+.table{position:relative;z-index:5;height:200px;margin-top:8px}
+.table.shuffling .fcard{box-shadow:0 0 21px 5px rgba(255,190,100,.48),0 0 48px 11px rgba(255,165,80,.18),0 6px 16px rgba(0,0,0,.5)}
+.fcard{position:absolute;bottom:20px;left:calc(50% - 34px);width:68px;height:102px;border-radius:7px;overflow:hidden;transform-origin:50% 320%;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.6);border:0;padding:0;background:var(--night-2);transition:filter .2s}
+.fcard img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.table.picking .fcard:hover{filter:brightness(1.18)}
+.table.idle .fcard{animation:invite 2.6s ease-in-out infinite}
+@keyframes invite{0%,100%{box-shadow:0 4px 12px rgba(0,0,0,.6),0 0 0 rgba(255,180,90,0)}50%{box-shadow:0 4px 12px rgba(0,0,0,.6),0 0 22px 4px rgba(255,180,90,.4)}}
+@media (prefers-reduced-motion: reduce){.table.idle .fcard{animation:none}}
+.fly{position:fixed;z-index:50;pointer-events:none}
+
+.hint{text-align:center;color:var(--muted);font-style:italic;font-size:21px;min-height:1.5em;margin:0}
+.actions{display:flex;justify-content:center;gap:10px}
+.btn{font-family:var(--display);font-size:18px;letter-spacing:.06em;color:var(--night);background:linear-gradient(180deg,var(--gold-hi),var(--gold));border:0;border-radius:999px;padding:12px 26px;cursor:pointer;box-shadow:0 4px 16px rgba(220,174,85,.3)}
+.btn.ghost{background:transparent;color:var(--gold-hi);border:1px solid var(--gold);box-shadow:none}
+
+.reading{display:flex;flex-direction:column;gap:14px;border-top:1px solid color-mix(in srgb, var(--gold) 30%, transparent);padding-top:16px}
+.reading h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;color:var(--gold-hi);text-align:center}
+.item{display:flex;flex-direction:column;gap:2px}
+.item .pos{font-family:var(--display);font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-hi)}
+.item .name{font-size:25px;font-weight:600}
+.item .name em{font-weight:500;color:var(--muted);font-size:19px}
+.item p{margin:0;max-width:62ch;font-size:22px}
+.full{margin-top:6px;border:1px solid color-mix(in srgb, var(--gold) 35%, transparent);border-radius:12px;background:color-mix(in srgb, var(--night-2) 70%, transparent);overflow:hidden}
+.full summary{cursor:pointer;list-style:none;padding:11px 16px;font-family:var(--display);font-size:16px;letter-spacing:.05em;color:var(--gold-hi);display:flex;justify-content:space-between;align-items:center}
+.full summary::-webkit-details-marker{display:none}
+.full summary::after{content:"";width:9px;height:9px;border-right:1.5px solid var(--gold-hi);border-bottom:1.5px solid var(--gold-hi);transform:rotate(45deg);transition:transform .3s;margin-top:-4px}
+.full[open] summary::after{transform:rotate(-135deg);margin-top:4px}
+.full summary:focus-visible{outline:2px solid var(--gold-hi);outline-offset:-2px}
+.full-body{padding:2px 16px 16px;display:flex;flex-direction:column;gap:14px;animation:fadein .5s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.full-title{margin:4px 0 0;font-family:var(--display);font-weight:400;font-size:24px;color:var(--gold-hi)}
+.full-title em{font-family:var(--body);font-size:18px;color:var(--muted)}
+.sec{display:flex;flex-direction:column;gap:6px}
+.sec p{margin:0;font-size:20px;line-height:1.5}
+.sec .lead{font-weight:700;color:var(--text);font-size:21px;line-height:1.4}
+.note{font-size:18px;color:var(--muted);font-style:italic;text-align:center;margin:0}
+@media (prefers-reduced-motion: reduce){.inner{transition-duration:.01s}.card.glow .front{animation:none}}
+</style>
+</head>
+<body>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header>
+    <h1>Таро Астры</h1>
+    <p class="sub">Задайте вопрос и вытяните карты</p>
+  </header>
+
+  <div class="tabs" id="tabs" role="group" aria-label="Расклад"></div>
+  <p class="sp-desc" id="sp-desc"></p>
+
+  <div class="spread" id="spread"></div>
+
+  <p class="hint" id="hint">Нажмите на колоду, чтобы перемешать</p>
+  <div class="table" id="table" aria-label="Колода"></div>
+  <div class="actions"><button class="btn" id="go">Перемешать</button></div>
+
+  <section class="reading" id="reading" hidden aria-live="polite"></section>
+</div>
+
+<script src="cards.js"></script>
+<script src="full.js"></script>
+<script>
+const IMG = id => `cards/${id}.webp`;
+const BACK = IMG("back");
+const CARDS = window.TAROT_DECK;
+// Расклады: cols — колонок в сетке, каждая карта занимает 2 колонки; c/r — колонка и ряд; x — карта кладётся поперёк
+const SPREADS = {
+  day:{title:"Карта дня", desc:"Одна карта — подсказка на сегодня", cols:2, pos:[{t:"Карта дня",c:1,r:1}]},
+  yesno:{title:"Да или нет", desc:"Задайте вопрос, на который можно ответить «да» или «нет»", cols:2, yesno:true, pos:[{t:"Ответ",c:1,r:1}]},
+  three:{title:"Прошлое · Настоящее · Будущее", desc:"Как развивается ваша ситуация", cols:6, pos:[{t:"Прошлое",c:1,r:1},{t:"Настоящее",c:3,r:1},{t:"Будущее",c:5,r:1}]},
+  advice:{title:"Ситуация · Препятствие · Совет", desc:"Когда непонятно, что делать дальше", cols:6, pos:[{t:"Ситуация",c:1,r:1},{t:"Препятствие",c:3,r:1},{t:"Совет",c:5,r:1}]},
+  mom:{title:"Для мамы", desc:"Расклад-забота о себе", cols:6, pos:[{t:"Что мне сейчас нужно",c:1,r:1},{t:"Где я теряю силы",c:3,r:1},{t:"Что даст ресурс",c:5,r:1}]},
+  choice:{title:"Выбор из двух", desc:"Сравните два пути и их итог", cols:6, pos:[{t:"Путь А",c:1,r:1},{t:"Итог пути А",c:1,r:2},{t:"Путь Б",c:5,r:1},{t:"Итог пути Б",c:5,r:2},{t:"Совет",c:3,r:"1 / span 2"}]},
+  love:{title:"Я и он", desc:"Расклад на отношения", cols:6, pos:[{t:"Мои чувства",c:1,r:1},{t:"Его чувства",c:5,r:1},{t:"Что между нами",c:3,r:1},{t:"Что мешает",c:2,r:2},{t:"К чему идёт",c:4,r:2}]},
+  month:{title:"Месяц вперёд", desc:"Главная тема месяца и подсказка на каждую неделю", cols:8, numbered:true, pos:[{t:"Тема месяца",c:4,r:1},{t:"Первая неделя",c:1,r:2},{t:"Вторая неделя",c:3,r:2},{t:"Третья неделя",c:5,r:2},{t:"Четвёртая неделя",c:7,r:2}]},
+  celtic:{title:"Кельтский крест", desc:"Глубокий разбор ситуации из 10 карт", cols:8, numbered:true, pos:[
+    {t:"Суть ситуации",c:3,r:2},{t:"Что мешает",c:3,r:2,x:true},{t:"Сознательное, цель",c:3,r:1},{t:"Подсознание, основа",c:3,r:3},
+    {t:"Прошлое",c:1,r:2},{t:"Ближайшее будущее",c:5,r:2},{t:"Вы сами",c:7,r:4},{t:"Окружение",c:7,r:3},
+    {t:"Надежды и страхи",c:7,r:2},{t:"Итог",c:7,r:1}]}
+};
+// Для «Да или нет»
+const NO_UP = ["m13","m15","m16","m18","s03","s05","s07","s08","s09","s10","c05","p05","w10"];
+const MAYBE_UP = ["m12","s02","s04","c04","c07","w02","w09","m09","m14"];
+function verdict(d){
+  if (d.reversed) return MAYBE_UP.includes(d.card.id) ? "Скорее нет" : "Нет";
+  if (NO_UP.includes(d.card.id)) return "Скорее нет";
+  if (MAYBE_UP.includes(d.card.id)) return "Пока неясно";
+  return "Да";
+}
+const plural = n => n % 10 === 1 && n % 100 !== 11 ? "карту" : [2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100) ? "карты" : "карт";
+const FAN = 13;
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = s => document.querySelector(s);
+const spreadEl = $("#spread"), table = $("#table"), go = $("#go"), hint = $("#hint"), reading = $("#reading");
+let mode = "day", phase = "idle", drawn = [], deck = [];
+$("#tabs").innerHTML = Object.entries(SPREADS).map(([k, s]) => `<button class="tab" id="tab-${k}" data-mode="${k}" aria-pressed="${k === mode}">${s.title}</button>`).join("");
+
+const wait = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
+const anim = (el, kf, opt) => el.animate(kf, {...opt, duration: reduce ? 1 : opt.duration, fill:"forwards"}).finished;
+const shuffled = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+function sizeSlots(){
+  const sp = SPREADS[mode], per = sp.cols / 2, w = spreadEl.clientWidth || 360;
+  const max = per === 1 ? 170 : per === 3 ? 118 : 84;
+  spreadEl.style.setProperty("--sw", Math.min(max, (w - (per - 1) * 6) / per - (sp.numbered ? 10 : 4)) * (sp.scale || 1) + "px");
+}
+addEventListener("resize", () => sizeSlots());
+function renderSlots(){
+  const sp = SPREADS[mode];
+  spreadEl.className = "spread" + (sp.numbered ? " numbered" : "");
+  spreadEl.style.gridTemplateColumns = `repeat(${sp.cols}, minmax(0,1fr))`;
+  spreadEl.innerHTML = sp.pos.map((p,i) => `<div class="slot${p.x ? " crossed" : ""}" style="grid-column:${p.c} / span 2;grid-row:${p.r}"><div class="slot-label">${p.t}</div><div class="slot-place" data-i="${i}" data-n="${i+1}"></div></div>`).join("");
+  sizeSlots();
+  $("#sp-desc").textContent = sp.desc;
+}
+const pileT = i => `translateY(${-i*0.8}px) rotate(${(i%3-1)*1.2}deg)`;
+function fanAngle(i){ const span = 74; return -span/2 + span * i/(FAN-1); }
+
+function buildPile(){
+  table.innerHTML = "";
+  for (let i = 0; i < FAN; i++){
+    const b = document.createElement("button");
+    b.className = "fcard"; b.dataset.i = i;
+    b.setAttribute("aria-label", "Карта " + (i+1));
+    b.innerHTML = `<img src="${BACK}" alt="">`;
+    b.style.transform = pileT(i);
+    b.addEventListener("click", () => pick(b));
+    table.appendChild(b);
+  }
+}
+
+async function shuffleAndFan(){
+  phase = "busy"; setTabs(false); table.classList.remove("idle");
+  go.hidden = true; hint.textContent = "Колода перемешивается…";
+  reading.hidden = true; reading.innerHTML = "";
+  drawn = []; deck = shuffled(CARDS);
+  deck.slice(0, SPREADS[mode].pos.length).forEach(c => { const im = new Image(); im.src = IMG(c.id); });
+  renderSlots(); buildPile();
+  const cards = [...table.children];
+  table.classList.add("shuffling");
+  cards.forEach(c => c.style.transformOrigin = "50% 50%");
+  const L = -Math.min(170, innerHeight*0.22), S = 1.9;
+  const R = Math.min(innerWidth*0.3, 135);
+  const up = i => `translate(0px, ${L - i*0.8}px) scale(${S}) rotate(${(i%3-1)*1.2}deg)`;
+  await wait(200);
+  // 1. колода плавно поднимается и увеличивается
+  await Promise.all(cards.map((c,i) => anim(c, [{transform: pileT(i)}, {transform: up(i)}], {duration:1100, delay:i*25, easing:"cubic-bezier(.45,0,.2,1)"})));
+  // 2. карты расходятся кругом и кружатся, как галактика, потом собираются
+  await Promise.all(cards.map((c,i) => {
+    const base = i/FAN * Math.PI*2, steps = 12, kf = [];
+    for (let k = 0; k <= steps; k++){
+      const f = k/steps, th = base + f*Math.PI*1.5, r = R*Math.sin(f*Math.PI);
+      kf.push({transform:`translate(${Math.cos(th)*r}px, ${L + Math.sin(th)*r*0.6 - i*0.8*(1-Math.sin(f*Math.PI))}px) scale(${S}) rotate(${Math.cos(th)*14*Math.sin(f*Math.PI) + (k===0||k===steps ? (i%3-1)*1.2 : 0)}deg)`});
+    }
+    return anim(c, kf, {duration:3200, delay:i*35, easing:"ease-in-out"});
+  }));
+  // 3. два медленных «перемешивания» половинками
+  for (let r = 0; r < 2; r++){
+    await Promise.all(cards.map((c,i) => {
+      const side = (i + r) % 2 ? -1 : 1;
+      return anim(c, [
+        {transform: up(i)},
+        {transform: `translate(${side*(90+Math.random()*20)}px, ${L - 24 - Math.random()*16}px) scale(${S}) rotate(${side*(9+Math.random()*5)}deg)`, offset:.45},
+        {transform: up(i)}
+      ], {duration:1150, delay:i*40, easing:"cubic-bezier(.45,0,.25,1)"});
+    }));
+  }
+  // 4. колода опускается и уменьшается до обычного размера
+  await Promise.all(cards.map((c,i) => anim(c, [{transform: up(i)}, {transform: pileT(i)}], {duration:1000, delay:i*20, easing:"cubic-bezier(.45,0,.2,1)"})));
+  table.classList.remove("shuffling");
+  cards.forEach((c,i) => { c.getAnimations().forEach(a => a.cancel()); c.style.transform = pileT(i); c.style.transformOrigin = ""; });
+  await wait(250);
+  // 5. раскладывается веером
+  await Promise.all(cards.map((c,i) => anim(c, [{transform: pileT(i)}, {transform: `rotate(${fanAngle(i)}deg)`}], {duration:900, delay:i*70, easing:"cubic-bezier(.2,.8,.2,1)"})));
+  cards.forEach((c,i) => { c.getAnimations().forEach(a => a.cancel()); c.style.transform = `rotate(${fanAngle(i)}deg)`; c.disabled = false; });
+  table.classList.add("picking");
+  phase = "picking";
+  const need = SPREADS[mode].pos.length;
+  hint.textContent = need === 1 ? (SPREADS[mode].yesno ? "Мысленно задайте вопрос и выберите карту" : "Прислушайтесь к себе и выберите одну карту") : `Выберите ${need} ${plural(need)}, по одной на каждую позицию`;
+}
+
+async function pick(fc){
+  const sp = SPREADS[mode];
+  if (phase === "idle") { shuffleAndFan(); return; }
+  if (phase !== "picking" || drawn.length >= sp.pos.length) return;
+  const idx = drawn.length;
+  const card = deck[idx];
+  const reversed = Math.random() < 0.3;
+  drawn.push({card, reversed});
+  if (drawn.length === sp.pos.length) { phase = "busy"; table.classList.remove("picking"); [...table.children].forEach(c => c.disabled = true); }
+
+  const place = spreadEl.querySelector(`.slot-place[data-i="${idx}"]`);
+  const from = fc.getBoundingClientRect(), to = place.getBoundingClientRect();
+  const angle = parseFloat(fc.style.transform.replace(/[^-\d.]/g, "")) || 0;
+  fc.style.visibility = "hidden";
+
+  const el = document.createElement("div");
+  el.className = "card fly" + (reversed ? " reversed" : "");
+  el.innerHTML = `<div class="inner"><div class="face back"><img src="${BACK}" alt=""></div><div class="face front"><img src="${IMG(card.id)}" alt="${card.name}${reversed ? ", перевёрнутая" : ""}"></div></div>`;
+  el.style.cssText = `inset:auto;left:${to.left}px;top:${to.top}px;width:${to.width}px;height:${to.height}px`;
+  document.body.appendChild(el);
+  const dx = (from.left + from.width/2) - (to.left + to.width/2);
+  const dy = (from.top + from.height/2) - (to.top + to.height/2);
+  const s = fc.offsetWidth / to.width;
+  await anim(el, [
+    {transform:`translate(${dx}px,${dy}px) scale(${s}) rotate(${angle}deg)`},
+    {transform:`translate(${dx*0.4}px,${dy*0.4 - 60}px) scale(${(s+1)/2}) rotate(${angle/3}deg)`, offset:.55},
+    {transform:"none"}
+  ], {duration:750, easing:"cubic-bezier(.3,.7,.2,1)"});
+  el.getAnimations().forEach(a => a.cancel());
+  el.classList.remove("fly"); el.removeAttribute("style");
+  place.style.borderColor = "transparent";
+  place.appendChild(el);
+  const tag = document.createElement("div"); tag.className = "rev-tag"; tag.textContent = "перевёрнута"; place.appendChild(tag);
+  await wait(120);
+  el.classList.add("flipped");
+  if (sp.pos[idx].x) { await wait(500); el.classList.add("cross"); }
+  await wait(950);
+  el.classList.add("glow");
+
+  if (drawn.length === sp.pos.length) showReading();
+  else hint.textContent = `Осталось выбрать: ${sp.pos.length - drawn.length}`;
+}
+
+async function showReading(){
+  const sp = SPREADS[mode];
+  hint.textContent = "";
+  await anim(table, [{opacity:1},{opacity:0}], {duration:400});
+  table.innerHTML = ""; table.getAnimations().forEach(a => a.cancel()); table.style.height = "0px";
+  reading.innerHTML = `<h2>${sp.title}</h2>` + (sp.yesno ? `<p class="verdict">${verdict(drawn[0])}</p>` : "") + drawn.map((d,i) => `
+    <div class="item"><span class="pos">${sp.numbered ? (i+1) + ". " : ""}${sp.pos[i].t}</span>
+    <span class="name">${d.card.name}${d.reversed ? ' <em>перевёрнутая</em>' : ''}</span>
+    <p data-text="${shortText(d)}"></p>${fullBlock(d, i)}</div>`).join("");
+  reading.hidden = false;
+  for (const p of reading.querySelectorAll("p[data-text]")) await typeText(p, p.dataset.text);
+  go.textContent = "Сделать новый расклад"; go.className = "btn ghost"; go.hidden = false;
+  phase = "done"; setTabs(true);
+}
+function shortText(d){
+  const f = (window.TAROT_FULL || {})[d.card.id];
+  return f ? (d.reversed ? f.rev : f.up)[0][0] : (d.reversed ? d.card.rev : d.card.up);
+}
+function fullBlock(d, i){
+  const f = (window.TAROT_FULL || {})[d.card.id];
+  if (!f) return "";
+  const blocks = d.reversed ? f.rev : f.up;
+  return `<details class="full" id="full-${i}"><summary>Полная расшифровка</summary><div class="full-body">
+    <h3 class="full-title">${d.card.name}${d.reversed ? " <em>перевёрнутая</em>" : ""}</h3>
+    ${blocks.map(([head, text]) => `<div class="sec"><p class="lead">${head}</p><p>${text}</p></div>`).join("")}
+  </div></details>`;
+}
+async function typeText(p, t){
+  if (reduce) { p.textContent = t; return; }
+  for (let i = 1; i <= t.length; i++){ p.textContent = t.slice(0,i); await new Promise(r => setTimeout(r, 18)); }
+}
+function setTabs(on){ document.querySelectorAll(".tab").forEach(t => t.disabled = !on); }
+function reset(){
+  table.style.height = ""; reading.hidden = true; reading.innerHTML = "";
+  go.textContent = "Перемешать"; go.className = "btn"; go.hidden = false;
+  renderSlots(); buildPile(); phase = "idle"; table.classList.add("idle");
+  hint.textContent = "Нажмите на колоду, чтобы перемешать";
+}
+go.addEventListener("click", () => { if (phase === "done") { reset(); } shuffleAndFan(); });
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  if (phase === "busy" || phase === "picking" && drawn.length) return;
+  mode = t.dataset.mode;
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-pressed", x === t));
+  reset();
+}));
+reset();
+
+/* starry sky */
+(() => {
+  const c = $("#sky"), x = c.getContext("2d");
+  let stars = [], sparks = [], w, h;
+  function size(){
+    const d = devicePixelRatio || 1; w = innerWidth; h = innerHeight;
+    c.width = w*d; c.height = h*d; x.setTransform(d,0,0,d,0,0);
+    stars = Array.from({length: Math.round(w*h/2200)}, () => ({x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.3+.2, p:Math.random()*6.28, s:.6+Math.random()*2.2}));
+    // крупные звёзды-искорки с лучами
+    sparks = Array.from({length: Math.max(10, Math.round(w*h/26000))}, () => ({x:Math.random()*w, y:Math.random()*h, r:2.5+Math.random()*3.5, p:Math.random()*6.28, s:.35+Math.random()*.8, gold:Math.random()<.5}));
+  }
+  function draw(t){
+    const g = x.createRadialGradient(w/2, h*0.15, 0, w/2, h*0.15, Math.max(w,h));
+    g.addColorStop(0, "#1b2352"); g.addColorStop(.55, "#0d1230"); g.addColorStop(1, "#070a1a");
+    x.fillStyle = g; x.fillRect(0,0,w,h);
+    for (const s of stars){
+      const a = reduce ? .7 : .2 + .8*Math.pow(Math.abs(Math.sin(s.p + t/1000*s.s)), 2);
+      x.globalAlpha = a; x.fillStyle = s.r > 1.1 ? "#f4d993" : "#e9e4ff";
+      x.beginPath(); x.arc(s.x, s.y, s.r, 0, 6.28); x.fill();
+    }
+    for (const s of sparks){
+      const k = reduce ? .6 : Math.pow(Math.max(0, Math.sin(s.p + t/1000*s.s)), 3);
+      if (k < .02) continue;
+      const col = s.gold ? "255,228,160" : "235,232,255", L = s.r*2.2*k;
+      const halo = x.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r*3);
+      halo.addColorStop(0, `rgba(${col},${.55*k})`); halo.addColorStop(1, `rgba(${col},0)`);
+      x.globalAlpha = 1; x.fillStyle = halo; x.beginPath(); x.arc(s.x, s.y, s.r*3, 0, 6.28); x.fill();
+      x.lineWidth = .6;
+      const gh = x.createLinearGradient(s.x-L, 0, s.x+L, 0);
+      gh.addColorStop(0, `rgba(${col},0)`); gh.addColorStop(.5, `rgba(${col},${.35*k})`); gh.addColorStop(1, `rgba(${col},0)`);
+      x.strokeStyle = gh; x.beginPath(); x.moveTo(s.x-L, s.y); x.lineTo(s.x+L, s.y); x.stroke();
+      const gv = x.createLinearGradient(0, s.y-L, 0, s.y+L);
+      gv.addColorStop(0, `rgba(${col},0)`); gv.addColorStop(.5, `rgba(${col},${.35*k})`); gv.addColorStop(1, `rgba(${col},0)`);
+      x.strokeStyle = gv; x.beginPath(); x.moveTo(s.x, s.y-L); x.lineTo(s.x, s.y+L); x.stroke();
+      x.fillStyle = `rgba(255,255,255,${.85*k})`; x.beginPath(); x.arc(s.x, s.y, 1.1, 0, 6.28); x.fill();
+    }
+    x.globalAlpha = 1;
+    if (!reduce) requestAnimationFrame(draw);
+  }
+  size(); addEventListener("resize", size); requestAnimationFrame(draw);
+})();
+</script>
+<script>
+// Telegram Mini App: на весь экран, цвета под тёмное небо
+(() => {
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (!tg) return;
+  try {
+    tg.ready(); tg.expand();
+    tg.setHeaderColor && tg.setHeaderColor("#0a0e22");
+    tg.setBackgroundColor && tg.setBackgroundColor("#0a0e22");
+    tg.disableVerticalSwipes && tg.disableVerticalSwipes();
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
